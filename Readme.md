@@ -15,3 +15,53 @@ The goal is to build a model that predicts **future price movements** using limi
 
 ## 🧰 Project Structure
 
+---
+
+### ⚙️ Data Preprocessing Pipeline
+
+1. **Feature Engineering**
+   - Created rolling statistics of WAP (weighted average price), spread, and volatility at stock level.
+   - Derived imbalance ratios, matched sizes, and directional indicators.
+   - Aggregated stock-level statistics such as mean, standard deviation, and skewness.
+
+2. **Missing Value Handling**
+   - Numerical columns filled using **median imputation**.
+   - Group-level imputation based on `stock_id` where appropriate.
+
+3. **Normalization**
+   - Standard scaling applied to features with different magnitudes for better model convergence.
+
+4. **Train–Validation Split**
+   - The training data was split **90% train / 10% validation** to evaluate performance locally.
+
+---
+
+### 🤖 Models Used
+
+| Model | Library | Key Hyperparameters |
+|--------|----------|--------------------|
+| LightGBM | `lightgbm.LGBMRegressor` | `n_estimators=500`, `learning_rate=0.05`, `num_leaves=31` |
+| XGBoost | `xgboost.XGBRegressor` | `n_estimators=500`, `learning_rate=0.05`, `max_depth=6` |
+| HistGradientBoosting | `sklearn.ensemble.HistGradientBoostingRegressor` | `max_iter=500`, `learning_rate=0.05` |
+
+Each base model was trained on the processed features and evaluated using **Mean Absolute Error (MAE)**.
+
+---
+
+### 🧩 Ensemble Model (Stacking)
+
+The predictions from the three base models were combined using a **meta-model (Linear Regression)** trained on out-of-fold predictions.  
+This stacking approach improved the stability and accuracy of the final predictions.
+
+---
+
+### 📊 Evaluation
+
+- Metric: **Mean Absolute Error (MAE)**
+- Validation Strategy: Time-aware split based on `date_id` and `time_id`
+- Observed improvement: Ensemble model reduced MAE by ~3–5% compared to individual models.
+
+---
+
+
+
