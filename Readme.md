@@ -1,4 +1,4 @@
-# Optiver Trading at the Close — Stock Price Prediction
+# Optiver Trading at the Close (Stock Price Prediction)
 
 Predicting stock price movements in the last 10 minutes before the NASDAQ closing auction.
 
@@ -14,7 +14,7 @@ in the 60 seconds after auction close, using only order book data from the final
 10 minutes of trading. 5.2M rows, 481 trading days.
 
 **The core challenge:** the target has fat tails (±400 bps actual range) but
-standard MAE-optimized models collapse predictions to a narrow band near zero —
+standard MAE-optimized models collapse predictions to a narrow band near zero,
 exactly where they're least useful for risk-aware decision making.
 
 ---
@@ -54,7 +54,7 @@ python -m scripts.train --data /path/to/train.csv           # full run
 
 ### Purged Time-Series Cross-Validation
 
-Standard k-fold CV shuffles data randomly. That's wrong for time-series — the
+Standard k-fold CV shuffles data randomly. That's wrong for time-series, the
 validation set ends up containing data from *before* the training set, so the model
 has effectively seen the future. For stock data this is especially dangerous because
 consecutive days are highly correlated.
@@ -62,22 +62,22 @@ consecutive days are highly correlated.
 Purged CV keeps strict chronological order: training always precedes validation.
 The 5-day purge gap removes days immediately before the validation window from
 training. Without it, lag features computed on day N leak information about day N+5.
-The gap size equals the longest lag feature — this is not optional.
+The gap size equals the longest lag feature, this is not optional.
 
 A test in `tests/test_pipeline.py` asserts that the maximum training date is always
-strictly less than the minimum validation date across all folds — a concrete
+strictly less than the minimum validation date across all folds, a concrete
 guarantee of no leakage, not just an assumption.
 
 ### Weighted Zero-Sum Adjustment
 
 The target measures each stock's movement relative to a weighted index. That index
 is a weighted average of all stocks. Therefore the weighted sum of all targets per
-timestamp must equal zero by definition — if some stocks go up relative to the
+timestamp must equal zero by definition, if some stocks go up relative to the
 index, others must go down by the same weighted amount.
 
 Raw model predictions violate this constraint. Post-processing subtracts the
 weighted mean prediction per timestamp, enforcing the mathematical constraint.
-This is a free performance gain — not a model choice, but a hard rule baked
+This is a free performance gain, not a model choice, but a hard rule baked
 into the problem definition.
 
 ### Inverse-MAE Ensemble Weighting
@@ -97,7 +97,7 @@ are computed from observed performance, not assumptions.
 
 Key findings:
 - Target centered near zero (mean: -0.05 bps) with fat tails ranging ±400 bps
-- Middle period (200–400s) has highest volatility — MAE 22% higher than late period
+- Middle period (200–400s) has highest volatility, MAE 22% higher than late period
 - Smaller stocks (low index weight) are substantially harder to predict
 - Buy/sell imbalance magnitude drops sharply toward auction close
 
@@ -157,7 +157,7 @@ Standard MAE-optimized models predicted moves of ±6 bps while actuals reached
 Standard GBDT over-relies on dominant early trees, pulling predictions toward the
 mean. DART randomly drops a fraction of existing trees during training (drop_rate=0.1),
 forcing independent tree contributions. Extended prediction range from ±6.06 to ±6.09
-bps at p99 — modest but directionally correct.
+bps at p99, modest but directionally correct.
 
 **Quantile Regression with Adaptive Blending**
 Five LightGBM models trained at q=[0.1, 0.25, 0.5, 0.75, 0.9] using pinball loss.
@@ -170,7 +170,7 @@ shifts toward q=0.1 and q=0.25. Extended prediction range to ±7.32 bps at p99.
 
 ---
 
-## Results (4-fold purged time-series CV, full dataset — 5.2M rows)
+## Results (4-fold purged time-series CV, full dataset 5.2M rows)
 
 ### Model Comparison
 
@@ -204,17 +204,17 @@ shifts toward q=0.1 and q=0.25. Extended prediction range to ±7.32 bps at p99.
 ### What Worked
 
 - **Lead stocks are substantially easier:** MAE ~4.3 vs ~5.9 for other stocks
-- **`seconds_in_bucket` is the top feature** in LightGBM — time within the auction
+- **`seconds_in_bucket` is the top feature** in LightGBM, time within the auction
   window dominates all other signals
 - **Zero-sum adjustment:** free improvement at inference time, no training cost
 - **Feature selection:** 107 vs 115 features with no meaningful MAE change
 
 ### What's Still Hard
 
-- **Middle period (200–400s):** MAE 22% higher than late period — rapid book
+- **Middle period (200–400s):** MAE 22% higher than late period, rapid book
   cancellations make this window structurally hard to model
 - **Volatile small-caps:** Clusters 5 and 8 have MAE of 15–20
-- **Tail collapse persists:** quantile blend reaches ±7 bps against actual ±28 bps —
+- **Tail collapse persists:** quantile blend reaches ±7 bps against actual ±28 bps,
   meaningful improvement but the gap remains large
 
 ### Top Features
@@ -228,7 +228,7 @@ shifts toward q=0.1 and q=0.25. Extended prediction range to ±7.32 bps at p99.
 ## What I'd Try Next
 
 1. Sequence model (LSTM or Transformer) treating the 600-second window as a time
-   series — the current model treats each row independently
+   series, the current model treats each row independently
 2. Stock-specific models for volatile clusters (5 and 8) where global models fail
 3. Stacking meta-learner instead of inverse-MAE weighting to better balance the
    four ensemble members
@@ -240,7 +240,7 @@ shifts toward q=0.1 and q=0.25. Extended prediction range to ±7.32 bps at p99.
 ## Acknowledgments
 
 Ideas borrowed from:
-- [lognorm's winning solution](https://www.kaggle.com/competitions/optiver-trading-at-the-close/discussion) — index weights, inferred price, revealed targets
+- [lognorm's winning solution](https://www.kaggle.com/competitions/optiver-trading-at-the-close/discussion),  index weights, inferred price, revealed targets
 - Various public notebooks for triplet imbalance and baseline features
 
 ---
