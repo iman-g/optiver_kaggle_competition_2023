@@ -1,0 +1,9 @@
+optiver-env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+results/
+.env
+*.log
+.DS_Store
